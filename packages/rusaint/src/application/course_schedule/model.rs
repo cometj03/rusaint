@@ -405,7 +405,7 @@ impl LectureCategory {
 
 /// 과목 정보
 #[allow(unused)]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
 pub struct Lecture {
     /// 계획
@@ -414,7 +414,7 @@ pub struct Lecture {
         default,
         deserialize_with = "deserialize_optional_string"
     )]
-    syllabus: Option<String>,
+    pub syllabus: Option<String>,
     /// 이수구분(주전공)
     #[serde(rename(deserialize = "이수구분(주전공)"))]
     category: String,
@@ -473,6 +473,15 @@ pub struct Lecture {
     /// 수강대상
     #[serde(rename(deserialize = "수강대상"))]
     target: String,
+}
+
+impl Lecture {
+    pub(crate) fn replace_syllabus(&self, url: String) -> Self {
+        Lecture {
+            syllabus: Some(url),
+            ..self.clone()
+        }
+    }
 }
 
 impl<'body> FromSapTable<'body> for Lecture {

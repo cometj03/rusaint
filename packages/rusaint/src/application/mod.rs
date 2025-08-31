@@ -21,6 +21,11 @@ use wdpe::{
     event::Event,
 };
 
+use reqwest::header::{ACCEPT, CONTENT_TYPE, HeaderMap, HeaderValue};
+use wdpe::error::ClientError;
+use wdpe::state::SapSsrClient;
+use wdpe::requests::WebDynproRequests;
+
 const SSU_WEBDYNPRO_BASE_URL: &str = "https://ecc.ssu.ac.kr/sap/bc/webdynpro/SAP/";
 const INITIAL_CLIENT_DATA_WD01: &str = "ClientWidth:1920px;ClientHeight:1000px;ScreenWidth:1920px;ScreenHeight:1080px;ScreenOrientation:landscape;ThemedTableRowHeight:33px;ThemedFormLayoutRowHeight:32px;ThemedSvgLibUrls:{\"SAPGUI-icons\":\"https://ecc.ssu.ac.kr:8443/sap/public/bc/ur/nw5/themes/~cache-20210223121230/Base/baseLib/sap_fiori_3/svg/libs/SAPGUI-icons.svg\",\"SAPWeb-icons\":\"https://ecc.ssu.ac.kr:8443/sap/public/bc/ur/nw5/themes/~cache-20210223121230/Base/baseLib/sap_fiori_3/svg/libs/SAPWeb-icons.svg\"};ThemeTags:Fiori_3,Touch;ThemeID:sap_fiori_3;SapThemeID:sap_fiori_3;DeviceType:DESKTOP";
 const INITIAL_CLIENT_DATA_WD02: &str = "ThemedTableRowHeight:25px";
@@ -29,6 +34,21 @@ const INITIAL_CLIENT_DATA_WD02: &str = "ThemedTableRowHeight:25px";
 pub struct USaintClient {
     state: WebDynproState,
     client: reqwest::Client,
+}
+
+/// Helper function to create headers for XHR requests
+pub fn wd_xhr_header() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/x-www-form-urlencoded; charset=UTF-8"),
+    );
+    headers.insert(
+        "X-Requested-With",
+        HeaderValue::from_static("XMLHttpRequest"),
+    );
+    headers
 }
 
 impl<'a> USaintClient {
@@ -93,6 +113,68 @@ impl<'a> USaintClient {
         } else {
             Ok(EventProcessResult::Enqueued)
         }
+    }
+
+    #[warn(missing_docs)]
+    pub async fn process_event_get_response(
+        &mut self,
+        event: Event,
+    ) -> Result<String, WebDynproError> {
+        let _ = self.state.add_event(event).await;
+    
+        let serialized_events = self.state.serialize_and_clear_with_form_event().await?;
+        let response = {
+            self
+                .send_events(
+                    self.state.base_url(),
+                    self.state.body().ssr_client(),
+                    &serialized_events,
+                )
+                .await?
+        };
+        Ok(response)
+    }
+    
+    async fn send_events(
+        &self,
+        base_url: &Url,
+        ssr_client: &SapSsrClient,
+        serialized_events: &str,
+    ) -> Result<String, ClientError> {
+        let url = ssr_client.build_action_url(base_url)?;
+        let params = [
+            ("sap-charset", ssr_client.charset.as_str()),
+            ("sap-wd-secure-id", ssr_client.wd_secure_id.as_str()),
+            ("fesrAppName", ssr_client.app_name.as_str()),
+            (
+                "fesrUseBeacon",
+                if ssr_client.use_beacon {
+                    "true"
+                } else {
+                    "false"
+                },
+            ),
+            ("SAPEVENTQUEUE", serialized_events),
+        ];
+
+        let response = self
+            .client
+            .post(url)
+            .headers(wd_xhr_header())
+            .form(&params)
+            .send()
+            .await
+            .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(ClientError::InvalidResponse(response.status().to_string()));
+        }
+
+        let response_text = response
+            .text()
+            .await
+            .map_err(|e| ClientError::FailedRequest(e.to_string()))?;
+        Ok(response_text)
     }
 
     async fn load_placeholder(&mut self) -> Result<(), WebDynproError> {
