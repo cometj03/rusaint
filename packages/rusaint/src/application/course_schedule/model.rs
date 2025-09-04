@@ -414,7 +414,7 @@ pub struct Lecture {
         default,
         deserialize_with = "deserialize_optional_string"
     )]
-    pub syllabus: Option<String>,
+    syllabus: Option<String>,
     /// 이수구분(주전공)
     #[serde(rename(deserialize = "이수구분(주전공)"))]
     category: String,
@@ -476,6 +476,16 @@ pub struct Lecture {
 }
 
 impl Lecture {
+    #[warn(missing_docs)]
+    pub fn syllabus(&self) -> &Option<String> {
+        &self.syllabus
+    }
+
+    #[warn(missing_docs)]
+    pub fn code(&self) -> &String {
+        &self.code
+    }
+
     pub(crate) fn replace_syllabus(&self, url: String) -> Self {
         Lecture {
             syllabus: Some(url),

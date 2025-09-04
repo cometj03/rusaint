@@ -70,18 +70,18 @@ pub(crate) async fn try_table_into_lecture_with_scroll(
         })?
         .try_into()
         .unwrap();
+    println!("row_count: {}", row_count);
     let mut table_body = parser.read(SapTableBodyCommand::new(table.clone()))?;
     let mut results: Vec<Lecture> = Vec::with_capacity(row_count);
     while results.len() < row_count {
-        println!("results length: {}", results.len());
         let partial_results: Vec<Lecture> = table_body.try_table_into::<Lecture>(&parser)?;
         let mut replaced_results: Vec<Lecture> = Vec::with_capacity(partial_results.len());
 
         for lecture in &partial_results {
-            let lec = match lecture.syllabus {
-                Some(ref id) => {
+            let lec = match lecture.syllabus() {
+                Some(id) => {
                     let url = click_syllabus_button_by_id(id.to_string(), client, &parser).await?;
-                    lecture.clone().replace_syllabus(url)
+                    lecture.replace_syllabus(url)
                 }
                 None => lecture.clone()
             };
@@ -108,6 +108,7 @@ pub(crate) async fn try_table_into_lecture_with_scroll(
             parser = ElementParser::new(client.body());
             table_body = parser.read(SapTableBodyCommand::new(table.clone()))?;
         }
+        println!("results length: {}/{}", results.len(), row_count);
     }
     Ok(results)
 }
