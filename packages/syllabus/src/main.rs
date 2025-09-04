@@ -19,6 +19,7 @@ mod types;
 async fn main() -> Result<(), Box<RusaintError>> {
     // for year in 2024..=2025 {
     //     for semester in vec![SemesterType::One, SemesterType::Summer, SemesterType::Two, SemesterType::Winter] {
+    //         println!("start {} {}", year, semester);
     //         save_all_lectures(year, semester).await?;
     //     }
     // }
@@ -49,7 +50,7 @@ async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<(), Box<
     let session = Arc::new(USaintSession::anonymous());
 
     // 일단 0부터 9까지 검색한거 모으고 code를 기준으로 중복 제거
-    let lectures2: Vec<Vec<Lecture>> = (0..=9)
+    let lectures2: Vec<Vec<Lecture>> = (1..=1)
         .map(|i| find_by_lecture(session.clone(), year, semester, i.to_string(), i))
         .collect::<FuturesUnordered<_>>()
         .try_collect::<Vec<_>>()
@@ -73,7 +74,8 @@ async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<(), Box<
     let lectures = map.values().collect::<Vec<&Lecture>>();
     let json =
         serde_json::to_string_pretty(&lectures).expect("Failed to serialize lectures to JSON");
-    let mut file = File::create(format!("{}_{}.json", year, semester_to_code(semester)))
+    std::fs::create_dir_all("../assets").expect("Failed to create dir");
+    let mut file = File::create(format!("../assets/lectures/{}_{}.json", year, semester_to_code(semester)))
         .expect("Failed to create json file");
     file.write_all(json.as_bytes())
         .expect("Failed to write file");
