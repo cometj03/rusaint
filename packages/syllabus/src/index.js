@@ -14,29 +14,30 @@ const processSyllabus = (syllabus) => {
     for (let [k, v] of [
         ["SMTEXT", "name"],
         ["PROF_NM", "professor"],
-        ["SCALE_TEXT", "grade_scale"], // 성적스케일: '점수 100기준 입력'
-        // ["PERYR", "year"],
-        // ["PERID", "semester"],
-        // ["SMOBJID", "code"],
-        ["SENO", "division_no"], // 분반: '01', '02'
-        ["BOOK_TARGET", "target"], // 수강대상학과: '3학년 컴퓨터', '(학과)', '3학년' 
-        ["DESIGNATION", "category"], // 이수구분: '전필-컴퓨터'
-        // ["PTPLAN", "credit"], // Lecture::time_points로 대체
-        ["CLSBORDT", "grade_rule"], // 성적평가방식
-        ["CLSLANGT", "lang"], // 강의언어
-        ["PROF_ROOM", "prof_room"], // 교수실
-        ["PROF_TELNR", "prof_telno"], // 연락처
-        ["SMTPADR", "prof_email"], // 이메일
-        ["PREREQ", "required_prerequisite"], // 필수 선수과목
+        ["PERYR", "year"],
+        ["PERID", "semester"],
+        ["SMOBJID", "code"],
+        ["SENO", "division_no"],                // 분반: '01', '02'
+        ["BOOK_TARGET", "target"],              // 수강대상학과: '3학년 컴퓨터', '(학과)', '3학년' 
+        ["DESIGNATION", "category"],            // 이수구분: '전필-컴퓨터'
+        ["SCALE_TEXT", "grade_scale"],          // 성적스케일: '점수 100기준 입력'
+        ["CLSLANGT", "lang"],                   // 강의언어
+        ["PROF_ROOM", "prof_room"],             // 교수실
+        ["PROF_TELNR", "prof_telno"],           // 연락처
+        ["SMTPADR", "prof_email"],              // 이메일
+        ["PTPLAN", "credit"],                   // 학점/주당시간 
+        ["CATEGORYT_1746", "subject_type"],     // 교과목유형: '이론'
+        ["CLSBORDT", "grade_rule"],             // 성적평가방식
+        ["COUNSELTM", "counsel"],               // 상담 신청 방식
+        ["PREREQ", "required_prerequisite"],    // 필수 선수과목
         ["PREREQ_M", "recommended_prerequisite"], // 권장 선수과목
-        ["ABSTRACT", "abstract"], // 교과목 개요
-        ["CATEGORYT_1746", "subject_type"], // 교과목유형: '이론'
-        ["CLSWY_TEXT", "class_progress_type"], // 강좌형식: '이론, 토론식수업'
-        ["CLASSTYPE", "class_type"], // 수업유형
-        ["TXTREFER", "textbook_main"], // 주교재
-        ["TXTREFER_M", "textbook_sub"], // 참고교재(대표)
-        ["PRECLASS", "prepare_for_study"], // 학습준비사항
-        ["CHAMGO", "note"], // 수강생 유의 및 참고사항
+        ["ABSTRACT", "class_abstract"],         // 교과목 개요
+        ["CLSWY_TEXT", "class_way_type"],       // 강좌형식: '이론, 토론식수업'
+        ["TXTREFER", "textbook_main"],          // 주교재
+        ["TXTREFER_M", "textbook_sub"],         // 참고교재(대표)
+        ["PRECLASS", "preclass"],               // 학습준비사항
+        ["CHAMGO", "etc"],                      // 수강생 유의 및 참고사항
+        ["CLASSTYPE", "class_type"],            // 수업유형
     ]) {
         ret[v] = syllabus.ET_PLAN[0][0][k];
     }
