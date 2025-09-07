@@ -3,6 +3,7 @@ members = [
   "packages/rusaint",
   "packages/rusaint-cli",
   "packages/rusaint-ffi",
+  "packages/syllabus",
   "uniffi-bindgen",
   "session-helper",
 ]

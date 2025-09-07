@@ -78,7 +78,7 @@ pub(crate) async fn try_table_into_lecture_with_scroll(
         let mut replaced_results: Vec<Lecture> = Vec::with_capacity(partial_results.len());
 
         for lecture in &partial_results {
-            let lec = match lecture.syllabus() {
+            let lec = match &lecture.syllabus {
                 Some(id) => {
                     let url = click_syllabus_button_by_id(id.to_string(), client, &parser).await?;
                     lecture.replace_syllabus(url)

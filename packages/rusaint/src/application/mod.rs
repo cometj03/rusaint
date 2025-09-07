@@ -38,6 +38,7 @@ pub struct USaintClient {
 
 /// Helper function to create headers for XHR requests
 pub fn wd_xhr_header() -> HeaderMap {
+    // wdpe에서 가져옴
     let mut headers = HeaderMap::new();
     headers.insert(ACCEPT, HeaderValue::from_static("*/*"));
     headers.insert(
@@ -115,7 +116,7 @@ impl<'a> USaintClient {
         }
     }
 
-    #[warn(missing_docs)]
+    #[allow(missing_docs)]
     pub async fn process_event_get_response(
         &mut self,
         event: Event,
@@ -141,6 +142,7 @@ impl<'a> USaintClient {
         ssr_client: &SapSsrClient,
         serialized_events: &str,
     ) -> Result<String, ClientError> {
+        // wdpe에서 가져옴
         let url = ssr_client.build_action_url(base_url)?;
         let params = [
             ("sap-charset", ssr_client.charset.as_str()),
