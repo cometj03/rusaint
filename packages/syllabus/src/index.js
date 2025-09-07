@@ -98,29 +98,29 @@ const processSyllabus = (syllabus) => {
 };
 
 (async () => {
-    fs.mkdirSync(`${__dirname}/../assets/syllabus`, {recursive: true});
+    let lectures_dir = `${__dirname}/../assets/lectures`;
+    let syllabus_dir = `${__dirname}/../assets/syllabus`;
+    fs.mkdirSync(syllabus_dir, {recursive: true});
 
-    for (let filename of fs.readdirSync(`${__dirname}/../assets/lectures`)) {
+    for (let filename of fs.readdirSync(lectures_dir)) {
         console.log(`filename: ${filename}`);
-        let [year, semester] = filename.split(".")[0].split("_");
-        let data = JSON.parse(fs.readFileSync(`${__dirname}/../assets/lectures/${filename}`, "utf-8"));
 
-        let syllabus_data = {};
+        let syllabus_filename = `${syllabus_dir}/${filename}`;
+        let exist = JSON.parse(fs.existsSync(syllabus_filename) ? fs.readFileSync(syllabus_filename) : "{}");
+        let data = JSON.parse(fs.readFileSync(`${lectures_dir}/${filename}`, "utf-8"));
+
+        let [year, semester] = filename.split(".")[0].split("_");
 
         const run = async (r) => {
-            if (!data.length) {
-                r();
-                return;
+            while (data.length) {
+                let {syllabus, code} = data.pop();
+                if (!syllabus || code in exist) continue;
+
+                let syllabus_code = parseCode(syllabus);
+                let raw_data = await getSyllabus(year, semester, syllabus_code);
+                if (raw_data) exist[code] = processSyllabus(raw_data);
             }
-            let {syllabus, code} = data.pop();
-            if (!syllabus) {
-                run(r);
-                return;
-            }
-            let syllabus_code = parseCode(syllabus);
-            let raw_data = await getSyllabus(year, semester, syllabus_code);
-            if (raw_data) syllabus_data[code] = processSyllabus(raw_data);
-            run(r);
+            r();
         }
 
         let promises = [];
@@ -128,7 +128,7 @@ const processSyllabus = (syllabus) => {
             promises.push(new Promise(r => run(r)));
         await Promise.all(promises);
 
-        fs.writeFileSync(`${__dirname}/../assets/syllabus/${filename}`, JSON.stringify(syllabus_data, null, 2));
+        fs.writeFileSync(syllabus_filename, JSON.stringify(exist, null, 1));
         console.log(`finish ${year} ${semester}`);
     }
 })();
