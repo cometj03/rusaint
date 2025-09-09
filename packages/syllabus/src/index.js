@@ -113,12 +113,14 @@ const processSyllabus = (syllabus) => {
 
         const run = async (r) => {
             while (data.length) {
-                let {syllabus, code} = data.pop();
-                if (!syllabus || code in exist) continue;
+                let d = data.pop();
+                let url = d["계획"];
+                let code = d["과목번호"];
+                if (!url || code in exist) continue;
 
-                let syllabus_code = parseCode(syllabus);
-                let raw_data = await getSyllabus(year, semester, syllabus_code);
-                if (raw_data) exist[code] = processSyllabus(raw_data);
+                let syllabus_code = parseCode(url);
+                let syllabus = await getSyllabus(year, semester, syllabus_code);
+                if (syllabus) exist[code] = processSyllabus(syllabus);
             }
             r();
         }

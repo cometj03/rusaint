@@ -40,7 +40,10 @@ pub(crate) fn deserialize_bool_string<'de, D: Deserializer<'de>>(
 pub(crate) fn deserialize_optional_string<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<String>, D::Error> {
-    let binding = String::deserialize(deserializer)?;
+    let binding = match String::deserialize(deserializer) {
+        Ok(s) => s,
+        Err(_) => { return Ok(None); }
+    };
     let value = binding.trim();
     if value.is_empty() {
         Ok(None)

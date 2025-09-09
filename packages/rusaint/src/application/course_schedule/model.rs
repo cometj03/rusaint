@@ -410,52 +410,52 @@ impl LectureCategory {
 pub struct Lecture {
     /// 계획
     #[serde(
-        rename(deserialize = "계획"),
+        rename = "계획",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub syllabus: Option<String>,
     /// 이수구분(주전공)
-    #[serde(rename(deserialize = "이수구분(주전공)"))]
+    #[serde(rename = "이수구분(주전공)")]
     pub category: String,
     /// 이수구분(다전공)
     #[serde(
-        rename(deserialize = "이수구분(다전공)"),
+        rename = "이수구분(다전공)",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub sub_category: Option<String>,
     /// 공학인증
     #[serde(
-        rename(deserialize = "공학인증"),
+        rename = "공학인증",
         default,
-        deserialize_with = "deserialize_optional_string"
+        deserialize_with = "deserialize_optional_string",
     )]
     pub abeek_info: Option<String>,
     /// 교과영역
     #[serde(
-        rename(deserialize = "교과영역"),
+        rename = "교과영역",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub field: Option<String>,
     /// 과목번호
-    #[serde(rename(deserialize = "과목번호"))]
+    #[serde(rename = "과목번호")]
     pub code: String,
     /// 과목명
-    #[serde(rename(deserialize = "과목명"))]
+    #[serde(rename = "과목명")]
     pub name: String,
     
     /// 수강유의사항
     #[serde(
-        rename(deserialize = "수강유의사항"),
+        rename = "수강유의사항",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub note: Option<String>,
     /// 강좌유형정보
     #[serde(
-        rename(deserialize = "강좌유형정보"),
+        rename = "강좌유형정보",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
@@ -463,40 +463,40 @@ pub struct Lecture {
 
     /// 분반
     #[serde(
-        rename(deserialize = "분반"),
+        rename = "분반",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub division: Option<String>,
     /// 교수명
-    #[serde(rename(deserialize = "교수명"))]
+    #[serde(rename = "교수명")]
     pub professor: String,
     /// 개설학과
-    #[serde(rename(deserialize = "개설학과"))]
+    #[serde(rename = "개설학과")]
     pub department: String,
     /// 시간/학점(설계)
-    #[serde(rename(deserialize = "시간/학점(설계)"))]
+    #[serde(rename = "시간/학점(설계)")]
     pub time_points: String,
     /// 수강인원
-    #[serde(rename(deserialize = "수강인원"))]
+    #[serde(rename = "수강인원")]
     pub personeel: String,
     /// 여석
-    #[serde(rename(deserialize = "여석"))]
+    #[serde(rename = "여석")]
     pub remaining_seats: String,
     /// 강의시간(강의실)
-    #[serde(rename(deserialize = "강의시간(강의실)"))]
+    #[serde(rename = "강의시간(강의실)")]
     pub schedule_room: String,
 
     /// 과정
     #[serde(
-        rename(deserialize = "과정"),
+        rename = "과정",
         default,
         deserialize_with = "deserialize_optional_string"
     )]
     pub process: Option<String>,
 
     /// 수강대상
-    #[serde(rename(deserialize = "수강대상"))]
+    #[serde(rename = "수강대상")]
     pub target: String,
 }
 
