@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<RusaintError>> {
     //         save_all_lectures(year, semester).await?;
     //     }
     // }
-    let lecture_map = save_all_lectures(2025, SemesterType::Two).await?;
+    let lecture_map = save_all_lectures(2025, SemesterType::One).await?;
     // collect_recognized_other_major(2025, SemesterType::One).await?;
 
     // DB화 하기
@@ -45,25 +45,23 @@ fn semester_to_code(semester: SemesterType) -> &'static str {
 async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<HashMap<String, Lecture>, Box<RusaintError>> {
     println!("save all lectures: {} {}", year, semester);
 
-    let mut lecture_map: HashMap<String, Lecture> = HashMap::new();
-
     std::fs::create_dir_all("./assets/lectures").expect("Failed to create dir");
     let filename = format!( "./assets/lectures/{}_{}.json", year, semester_to_code(semester));
 
+    let mut lecture_map: HashMap<String, Lecture> = HashMap::new();
     if let Ok(s) = std::fs::read_to_string(&filename) {
         if let Ok(exist) = serde_json::from_str::<Vec<Lecture>>(&s) {
             for lec in exist {
-                if lecture_map.contains_key(&lec.code) {
-                    continue;
-                }
                 lecture_map.insert(lec.code.to_string(), lec);
             }
         }
     }
 
+    println!("{} before length: {}", filename, lecture_map.keys().len());
+
     let session = Arc::new(USaintSession::anonymous());
     // 일단 0부터 9까지 검색한거 모으고 code를 기준으로 중복 제거
-    let lectures2: Vec<Vec<Lecture>> = (0..=2)
+    let lectures2: Vec<Vec<Lecture>> = (0..=3)
         .map(|i| find_by_lecture(session.clone(), year, semester, i.to_string(), i))
         .collect::<FuturesUnordered<_>>()
         .try_collect::<Vec<_>>()
@@ -80,7 +78,8 @@ async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<HashMap<
 
     println!("total length: {}", lecture_map.keys().len());
 
-    let lectures = lecture_map.values().collect::<Vec<&Lecture>>();
+    let mut lectures = lecture_map.values().collect::<Vec<&Lecture>>();
+    lectures.sort_by(|x, y| x.code.cmp(&y.code));
     let json =
         serde_json::to_string_pretty(&lectures).expect("Failed to serialize lectures to JSON");
     let mut file = File::create(&filename).expect("Failed to create json file");
