@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs::File, io::Write, sync::Arc};
 
 use futures::{
     TryStreamExt,
-    stream::FuturesUnordered,
+    stream::FuturesOrdered,
 };
 use rusaint::{
     RusaintError, USaintSession,
@@ -20,15 +20,23 @@ mod types;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<RusaintError>> {
-    // for year in 2024..=2025 {
-    //     for semester in vec![SemesterType::One, SemesterType::Summer, SemesterType::Two, SemesterType::Winter] {
-    //         save_all_lectures(year, semester).await?;
-    //     }
-    // }
-    let lecture_map = save_all_lectures(2025, SemesterType::One).await?;
-    // collect_recognized_other_major(2025, SemesterType::One).await?;
+    let session = Arc::new(USaintSession::anonymous());
 
-    // DB화 하기
+    for year in 2023..=2024 {
+        let semesters = vec![
+            SemesterType::One,
+            SemesterType::Summer,
+            SemesterType::Two,
+            SemesterType::Winter,
+        ];
+        let _ = semesters
+            .into_iter()
+            .enumerate()
+            .map(|(i, semester)| save_all_lectures(session.clone(), year, semester, i))
+            .collect::<FuturesOrdered<_>>()
+            .try_collect::<Vec<_>>()
+            .await?;
+    }
 
     Ok(())
 }
@@ -42,11 +50,21 @@ fn semester_to_code(semester: SemesterType) -> &'static str {
     }
 }
 
-async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<HashMap<String, Lecture>, Box<RusaintError>> {
+async fn save_all_lectures(
+    session: Arc<USaintSession>,
+    year: u32,
+    semester: SemesterType,
+    delay: usize,
+) -> Result<(), Box<RusaintError>> {
+    tokio::time::sleep(tokio::time::Duration::from_secs(delay as u64)).await;
     println!("save all lectures: {} {}", year, semester);
 
     std::fs::create_dir_all("./assets/lectures").expect("Failed to create dir");
-    let filename = format!( "./assets/lectures/{}_{}.json", year, semester_to_code(semester));
+    let filename = format!(
+        "./assets/lectures/{}_{}.json",
+        year,
+        semester_to_code(semester)
+    );
 
     let mut lecture_map: HashMap<String, Lecture> = HashMap::new();
     if let Ok(s) = std::fs::read_to_string(&filename) {
@@ -59,21 +77,9 @@ async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<HashMap<
 
     println!("{} before length: {}", filename, lecture_map.keys().len());
 
-    let session = Arc::new(USaintSession::anonymous());
-    // 일단 0부터 9까지 검색한거 모으고 code를 기준으로 중복 제거
-    let lectures2: Vec<Vec<Lecture>> = (0..=3)
-        .map(|i| find_by_lecture(session.clone(), year, semester, i.to_string(), i))
-        .collect::<FuturesUnordered<_>>()
-        .try_collect::<Vec<_>>()
-        .await?;
-
-    for lectures in lectures2 {
-        for lec in lectures {
-            if lecture_map.contains_key(&lec.code) {
-                continue;
-            }
-            lecture_map.insert(lec.code.to_string(), lec);
-        }
+    let lectures = find_by_lecture(session.clone(), year, semester, "0".to_string()).await?;
+    for lec in lectures {
+        lecture_map.insert(lec.code.to_string(), lec);
     }
 
     println!("total length: {}", lecture_map.keys().len());
@@ -86,7 +92,7 @@ async fn save_all_lectures(year: u32, semester: SemesterType) -> Result<HashMap<
     file.write_all(json.as_bytes())
         .expect("Failed to write file");
 
-    Ok(lecture_map)
+    Ok(())
 }
 
 async fn find_by_lecture(
@@ -94,17 +100,18 @@ async fn find_by_lecture(
     year: u32,
     semester: SemesterType,
     keyword: String,
-    delay: u32,
 ) -> Result<Vec<Lecture>, RusaintError> {
-    tokio::time::sleep(tokio::time::Duration::from_secs(delay as u64)).await;
     println!("search '{}' in {} {}", keyword, year, semester);
     let mut app = USaintClientBuilder::new()
         .session(session)
         .build_into::<CourseScheduleApplication>()
         .await?;
     let category = LectureCategory::find_by_lecture(&keyword);
-    let lectures = app.find_lectures(year, semester, &category).await?;
-    Ok(lectures.collect())
+    let lectures = match app.find_lectures(year, semester, &category).await {
+        Ok(lectures) => lectures.collect(),
+        Err(_) => vec![],
+    };
+    Ok(lectures)
 }
 
 /*
